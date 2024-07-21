@@ -1,0 +1,23 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+	"name": "YoullDetect Dev",
+	// "context": "..",
+	// "dockerFile": "../Dockerfile",
+	"image": "ultralytics/ultralytics:latest",
+	"customizations": {"vscode": {
+		"extensions": [
+		"ms-python.python",
+		"ms-python.vscode-pylance"
+		],
+		"settings": {
+			"python.pythonPath": "/usr/local/bin/python",
+			"python.linting.pylintEnabled": true,
+			"python.linting.pylintPath": "/usr/local/bin/pylint",
+			"python.linting.enabled": true,
+			"python.formatting.blackArgs": ["-l", "100"]
+		}
+	}},
+	
+	"postCreateCommand": "./.devcontainer/postcreate.sh"
+}
