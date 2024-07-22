@@ -5,9 +5,15 @@ from ultralytics.engine.results import Results
 import uvicorn
 from typing import Annotated
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import FileResponse
 
 app = FastAPI()
-model = YOLO('yolov8s-oiv7.pt')  # Load model at startup
+# base_model = YOLO('yolov8s-oiv7.pt')  # Load model at startup
+
+# base_model.export(format="edgetpu", imgsz=320, )  # creates 'yolov8n_full_integer_quant_edgetpu.tflite'
+
+# Load the exported TFLite Edge TPU model
+model = YOLO("/models/yolov8s-oiv7_full_integer_quant_edgetpu.tflite", task="detect")
 
 @app.get("/")
 async def root():
@@ -22,7 +28,7 @@ async def do_detection(file: UploadFile) -> Results:
     # image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
     # Perform object detection with YOLOv8
-    detections = model(image)
+    detections = model(image, imgsz=320)
     #detections = model.predict(image)
     return detections[0] #TODO Check to make sure a detection exists
 
@@ -55,9 +61,8 @@ async def detect_img(file: UploadFile):
 
     detection.show()
     detection.save(filename="result.jpg")
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    return FileResponse("result.jpg")
 
 class CPAIResponse:
     def __init__(self):
@@ -77,8 +82,8 @@ class CPAIResponse:
     
 
 @app.post("/detect_cpai")
-async def detect_cpai(file: UploadFile):
-    detection = await do_detection(file)
+async def detect_cpai(image: UploadFile):
+    detection = await do_detection(image)
 
     response = CPAIResponse()
 
@@ -95,10 +100,12 @@ async def detect_cpai(file: UploadFile):
             'x_max': float(box[2]),
             'y_max': float(box[3]),
             'confidence': float(score),
-            'label': model.names[int(cls)]
+            'label': model.names[int(cls)].lower()
         })
     
     #TODO Fill out other fields
 
     return response
 
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
